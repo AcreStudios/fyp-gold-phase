@@ -5,14 +5,14 @@ LightmapParameters:
   m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 0}
-  m_Name: Transparent
+  m_Name: BuildingsFar
   serializedVersion: 3
-  resolution: 1
-  clusterResolution: 0.6
+  resolution: 0.8
+  clusterResolution: 0.4
   irradianceBudget: 128
-  irradianceQuality: 8192
+  irradianceQuality: 4096
   backFaceTolerance: 0.9
-  isTransparent: 1
+  isTransparent: 0
   modellingTolerance: 0.01
   systemTag: -1
   edgeStitching: 1
