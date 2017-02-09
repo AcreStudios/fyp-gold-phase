@@ -4,10 +4,9 @@ using UnityEngine;
 
 public class FreeLookCamera : MonoBehaviour
 {
-	// Cache
+	// Components
 	Transform trans;
 
-	[Header("Camera Fly Settings")]
 	public CursorLockMode CursorBehavior = CursorLockMode.Locked;
 
 	public float LookSpeed = 50f;
