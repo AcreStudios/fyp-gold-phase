@@ -189,7 +189,7 @@ ModelImporter:
     13700016: hana_sleeves
     13700018: hana_top
   materials:
-    importMaterials: 0
+    importMaterials: 1
     materialName: 0
     materialSearch: 1
   animations:
@@ -228,7 +228,7 @@ ModelImporter:
     secondaryUVPackMargin: 4
     useFileScale: 1
   tangentSpace:
-    normalSmoothAngle: 30
+    normalSmoothAngle: 59
     normalImportMode: 1
     tangentImportMode: 3
   importAnimation: 0
