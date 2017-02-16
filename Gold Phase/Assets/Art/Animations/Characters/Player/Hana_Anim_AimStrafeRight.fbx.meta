@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: 9a8a07340e9d3ca44afb63ebedbf68be
+guid: 924b79a731483c840adff8e343dfa854
 timeCreated: 1486607006
 licenseType: Free
 ModelImporter:
@@ -191,7 +191,7 @@ ModelImporter:
     400180: transform8
     400182: Waist_CTRL
     400184: Haha_Joints_GRP
-    7400000: Strafe Right Walk
+    7400000: Aim Strafe Right Walk
     9500000: //RootNode
   materials:
     importMaterials: 0
@@ -205,7 +205,7 @@ ModelImporter:
     motionNodeName: 
     animationImportErrors: 
     animationImportWarnings: "Copied Avatar Rig Configuration mis-match. Inbetween
-      bone rotation in copied configuration does not match rotation in animation file\nHana_Anim_StrafeRight\nClip
+      bone rotation in copied configuration does not match rotation in animation file\nHana_Anim_AimStrafeRight\nClip
       'Take 001' has import animation warnings that might lower retargeting quality:\nNote:
       Activate translation DOF on avatar to improve retargeting quality.\n\t'HipControl_JNT'
       is inbetween humanoid transforms and has rotation animation that will be discarded.\n\t'Spine_3_JNT'
@@ -220,12 +220,12 @@ ModelImporter:
     extraExposedTransformPaths: []
     clipAnimations:
     - serializedVersion: 16
-      name: Strafe Right Walk
+      name: Aim Strafe Right Walk
       takeName: Take 001
       firstFrame: 1
       lastFrame: 22
       wrapMode: 0
-      orientationOffsetY: 270
+      orientationOffsetY: -30
       level: 0
       cycleOffset: 0
       loop: 0

@@ -27,6 +27,7 @@ public class PlayerController : MonoBehaviour
 	private float horizontal, vertical;
 	private bool leftShift;
 
+
 	void Awake() 
 	{
 		// Cache
@@ -35,7 +36,7 @@ public class PlayerController : MonoBehaviour
 		charController = GetComponent<CharacterController>();
 	}
 
-	void Start()
+	void Start() 
 	{
 		// Get manager
 		playerInput = PlayerInputManager.GetInstance();
@@ -49,19 +50,18 @@ public class PlayerController : MonoBehaviour
 
 	private void MovePlayer() // Movement logic 
 	{
-		Vector2 input = new Vector2(playerInput.horizontal, playerInput.vertical);
-		Vector2 inputDir = input.normalized;
+		Vector3 input = new Vector3(playerInput.horizontal, 0f, playerInput.vertical);
+		Vector3 inputDir = input.normalized;
 
-		// Get target rotation
-		if(inputDir != Vector2.zero)
+		if(inputDir != Vector3.zero || playerInput.RMB)
 		{
-			float targetRot = Mathf.Atan2(inputDir.x, inputDir.y) * Mathf.Rad2Deg + tpCam.transform.eulerAngles.y;
+			float targetRot = trans.rotation.y + tpCam.camTrans.eulerAngles.y;
 			currentRotation = Vector3.up * Mathf.SmoothDampAngle(currentRotation.y, targetRot, ref turnSmoothVelocity, TurnSmoothTime);
 			trans.eulerAngles = currentRotation;
 		}
 
 		// Get target speed
-		bool running = playerInput.leftShift;
+		bool running = playerInput.leftShift && !(inputDir.z == -1f) && !(playerInput.RMB);
 		float targetSpeed = ((running) ? RunSpeed : WalkSpeed) * inputDir.magnitude;
 		currentSpeed = Mathf.SmoothDamp(currentSpeed, targetSpeed, ref speedSmoothVelocity, SpeedSmoothTime);
 
@@ -72,18 +72,19 @@ public class PlayerController : MonoBehaviour
 			velocityY += gravity * Time.deltaTime;
 
 		// Move character
-		Vector3 velocity = trans.forward * currentSpeed + Vector3.up * velocityY;
+		Vector3 forwardDir = trans.forward * inputDir.z + trans.right * inputDir.x;
+		Vector3 velocity =  forwardDir * currentSpeed + Vector3.up * velocityY;
 		charController.Move(velocity * Time.deltaTime);
 		currentSpeed = new Vector2(charController.velocity.x, charController.velocity.z).magnitude;
 
 		// Animate character
 		float runAnimPercent = currentSpeed / RunSpeed;
 		float walkAnimPercent = currentSpeed / WalkSpeed * .5f;
-		float forward = ((running) ? runAnimPercent : walkAnimPercent) * inputDir.y;
+		float forward = ((running) ? runAnimPercent : walkAnimPercent) * inputDir.z;
 		float strafe = ((running) ? runAnimPercent : walkAnimPercent) * inputDir.x;
 
 		anim.SetFloat("forward", forward, SpeedSmoothTime, Time.deltaTime);
-		anim.SetFloat("strafe", strafe, SpeedSmoothTime, Time.deltaTime);
+		anim.SetFloat((playerInput.RMB) ? "aimstrafe" : "strafe", strafe, SpeedSmoothTime, Time.deltaTime);
 	}
 
 	private bool CheckGrounded() // Spherecasting downwards to check ground 

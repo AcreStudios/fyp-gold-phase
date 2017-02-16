@@ -8,13 +8,16 @@ public class EnemyHealth : MonoBehaviour
 	private RagdollDeath ragdoll;
 
 	[Range(0f, 100f)]
-	public float CurrentHealth;
+	public float CurrentHealth = 100f;
 
 	public MonoBehaviour[] ScriptsToDisableOnDeath;
 
 	[Header("Debug")]
 	public bool DebugDamage = false;
 	public bool DebugDeath = false;
+
+	protected bool dead = false;
+
 
 	void Awake() 
 	{
@@ -37,8 +40,10 @@ public class EnemyHealth : MonoBehaviour
 		}
 	}
 
-	public virtual void ReceiveDamage(int damage = 10)
+	public virtual void ReceiveDamage(float damage = 10f)
 	{
+		if(dead) return;
+		
 		// Damage logic
 		CurrentHealth -= damage;
 		if(CurrentHealth <= 0f)
@@ -47,6 +52,8 @@ public class EnemyHealth : MonoBehaviour
 
 	public virtual void Die()
 	{
+		dead = true;
+
 		if(ragdoll)
 			ragdoll.ToggleRagdoll();
 

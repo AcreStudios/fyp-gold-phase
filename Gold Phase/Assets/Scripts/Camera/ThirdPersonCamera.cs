@@ -1,115 +1,241 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System;
 
 public class ThirdPersonCamera : MonoBehaviour
-{
+{ 
 	public static ThirdPersonCamera instance;
 	public static ThirdPersonCamera GetInstance()
 	{
 		return instance;
 	}
-	
-	// Components
+
+	// Components and transforms
 	private Transform trans;
+	private Transform camPivot;
+	[HideInInspector]
+	public Transform camTrans;
 	private PlayerInputManager playerInput;
 
-	[Header("Camera Setup")]
-	public bool AutoMainCamera = true;
+	[Header("Debug")]
+	public CursorLockMode CursorMode = CursorLockMode.Locked;
 	public bool AutoTargetPlayer = true;
 	public Transform Target;
-	public CursorLockMode cursorBehavior = CursorLockMode.None;
 
-	[Header("Pan Settings")]
-	public float LookSensitivity = 10f;
-	private float yaw, pitch;
-	public Vector2 LookMinMaxAngle = new Vector2(-40f, 85f);
+	[Header("Camera Options")]
+	public float MouseSensitivityX = 2.5f;
+	public float MouseSensitivityY = 2.5f;
+	public float MinAngle = 40f;
+	public float MaxAngle = 85f;
+	public float CameraPanSpeed = 5f;
+	public float CameraMoveSpeed = 5f;
+	public float CameraCollideSpeed = 10f;
+	public float CameraSmoothing = .012f;
+	public bool InvertY = true;
 
-	[Header("Move Settings")]
-	public float MoveSmoothTime = .015f;
-	private Vector3 moveSmoothVelocity;
-	private Vector3 currentPosition;
-	public float RotateSmoothTime = .06f;
-	private Vector3 rotationSmoothVelocity;
-	private Vector3 currentRotation;
+	[Header("Wall Collision Options")]
+	public float WallCheckDist = .1f;
+	public float HideMeshDistance = .5f;
+	public LayerMask WallLayer;
+	[HideInInspector]
+	public SkinnedMeshRenderer[] meshes;
+	//[HideInInspector]
+	//public MeshRenderer[] wpnMeshes;
+
+	[Header("Aim Settings")]
+	public float DefaultFOV = 60f;
+	public float AimingFOV = 30f;
+	public float ZoomSpeed = 10f;
+
+	private Camera mainCam;
 
 	[Header("Positioning")]
-	public float DistanceFromTarget = 2f;
-	public float PivotHeight = 1.3f;
-	private Transform cameraPivot;
+	public Vector3 DefaultPositionOffset = new Vector3(0f, 0f, -2.5f);
+	public Vector3 AimPositionOffset = new Vector3(-2f, 0f, -2.5f);
+	public Vector3 CoverPositionOffset = new Vector3(-1.8f, 0f, -3f);
+	public enum Shoulder { RIGHT, LEFT }
+	public Shoulder CurrentShoulder;
+
+	// Camera helpers
+	private Vector3 velocity;
+	[HideInInspector]
+	public float newX, newY = 0f;
+
 
 	void Awake() 
 	{
-		// Cache
-		trans = GetComponent<Transform>();
-
 		// Implement singleton
-		instance = this;
+		if(!instance)
+			instance = this;
+		else
+		{
+			if(instance != this)
+			{
+				Destroy(instance.gameObject);
+				instance = this;
+			}
+		}
+
+		// Cache components and transforms
+		trans = GetComponent<Transform>();
+		camPivot = trans.GetChild(0);
+		camTrans = camPivot.GetChild(0);
 	}
-	
+
 	void Start() 
 	{
 		// Get manager
 		playerInput = PlayerInputManager.GetInstance();
 
-		// Init
-		SetupCamera();
+		ParentAndResetMainCamera();
+		TargetPlayer();
+
+		// Cache main camera for changing FOV
+		mainCam = Camera.main;
+
+		// Cache all meshes to hide when camera is near, AFTER getting target
+		meshes = Target.GetComponentsInChildren<SkinnedMeshRenderer>();
+		//wpnMeshes = Target.GetComponentsInChildren<MeshRenderer>();
+
+		// Set cursor lock
+		Cursor.lockState = CursorMode;
 	}
-	
-	void LateUpdate() 
+
+	void Update() 
 	{
 		RotateCamera();
-		MoveCamera();
+		CheckWallCollision(playerInput.RMB);
+		CheckMeshDistance();
+		ChangeFOV(playerInput.RMB);
+		if(playerInput.MMB)
+			SwitchShoulder();
 	}
 
-	private void RotateCamera() 
+	void LateUpdate() 
 	{
-		yaw += playerInput.mouseX * LookSensitivity;
-		pitch -= playerInput.mouseY * LookSensitivity;
-		pitch = Mathf.Clamp(pitch, -Mathf.Abs(LookMinMaxAngle.x), LookMinMaxAngle.y);
-
-		Vector3 targetRot = new Vector3(pitch, yaw);
-		currentRotation = Vector3.SmoothDamp(currentRotation, targetRot, ref rotationSmoothVelocity, RotateSmoothTime);
-		trans.eulerAngles = currentRotation;
+		Vector3 targetPos = Target.position;
+		FollowTarget(targetPos);
 	}
 
-	private void MoveCamera() 
+	public void SwitchShoulder() // Change shoulder side 
 	{
-		Vector3 targetPos = Target.position - trans.forward * DistanceFromTarget;
-		currentPosition = Vector3.SmoothDamp(currentPosition, targetPos, ref moveSmoothVelocity, MoveSmoothTime);
-		trans.position = currentPosition;
-	}
-
-	private void SetupCamera() 
-	{
-		// Find player and create camera pivot
-		if(AutoTargetPlayer && !Target)
+		switch(CurrentShoulder)
 		{
-			Transform player = GameObject.FindGameObjectWithTag("Player").transform;
-			if(player)
-			{
-				// Create a camera pivot in player
-				GameObject camPivot = new GameObject();
-				camPivot.name = "Camera Pivot";
-
-				cameraPivot = camPivot.transform;
-				cameraPivot.transform.SetParent(player);
-				cameraPivot.transform.localPosition = new Vector3(0f, PivotHeight, 0f);
-				Target = cameraPivot.transform;
-			}
-			else
-				Debug.LogWarning("There is no GameObject in scene tagged as Player!");
+			case Shoulder.LEFT:
+				CurrentShoulder = Shoulder.RIGHT;
+				Target.GetComponent<Animator>().SetBool("mirror", true);
+				DefaultPositionOffset = new Vector3(-DefaultPositionOffset.x, DefaultPositionOffset.y, DefaultPositionOffset.z);
+				AimPositionOffset = new Vector3(-AimPositionOffset.x, DefaultPositionOffset.y, DefaultPositionOffset.z);
+				CoverPositionOffset = new Vector3(-CoverPositionOffset.x, DefaultPositionOffset.y, DefaultPositionOffset.z);
+				break;
+			case Shoulder.RIGHT:
+				CurrentShoulder = Shoulder.LEFT;
+				Target.GetComponent<Animator>().SetBool("mirror", false);
+				DefaultPositionOffset = new Vector3(-DefaultPositionOffset.x, DefaultPositionOffset.y, DefaultPositionOffset.z);
+				AimPositionOffset = new Vector3(-AimPositionOffset.x, DefaultPositionOffset.y, DefaultPositionOffset.z);
+				CoverPositionOffset = new Vector3(-CoverPositionOffset.x, DefaultPositionOffset.y, DefaultPositionOffset.z);
+				break;
 		}
+	}
 
-		// Auto parent main camera to camera pivot
-		if(AutoMainCamera)
-		{
-			Transform mainCam = Camera.main.transform;
-			mainCam.SetParent(trans);
-			mainCam.transform.position = new Vector3();
-			mainCam.transform.rotation = new Quaternion();
-		}
+	private void FollowTarget(Vector3 targetPos) // Follow the target smoothly 
+	{
+		targetPos = Vector3.SmoothDamp(trans.position, targetPos, ref velocity, CameraSmoothing);
+		trans.position = targetPos;
+	}
 
-		Cursor.lockState = cursorBehavior;
+	private void RotateCamera() // Rotate the camera with input 
+	{
+		// Get mouse movement
+		newX += MouseSensitivityX * playerInput.mouseX;
+		newY += (InvertY) ? MouseSensitivityY * playerInput.mouseY * -1f : MouseSensitivityY * playerInput.mouseY;
+
+		// Clamping
+		newX = Mathf.Repeat(newX, 360f);
+		newY = Mathf.Clamp(newY, -Mathf.Abs(MinAngle), MaxAngle);
+
+		// Rotation
+		Vector3 eulerAngleAxis = new Vector3(newY, newX);
+		Quaternion newRotation = Quaternion.Slerp(camPivot.localRotation, Quaternion.Euler(eulerAngleAxis), CameraPanSpeed * Time.deltaTime);
+		camPivot.localRotation = newRotation;
+	}
+
+	private void CheckWallCollision(bool aim) // Spherecast to prevent collision with walls and also switch shoulders 
+	{
+		// Do spherecast
+		RaycastHit hit;
+		Vector3 start = camPivot.position;
+		Vector3 dir = camTrans.position - camPivot.position;
+		float dist = Mathf.Abs(DefaultPositionOffset.z);
+		if(Physics.SphereCast(start, WallCheckDist, dir, out hit, dist, WallLayer))
+			RepositionCamera(hit, camPivot.position, dir);
+		else
+			PositionCamera((aim) ? AimPositionOffset : DefaultPositionOffset);
+	}
+
+	private void RepositionCamera(RaycastHit hit, Vector3 pivotPos, Vector3 dir) // Moves camera forward when we hit a wall 
+	{
+		float hitDist = hit.distance;
+		Vector3 targetPos = pivotPos + (dir.normalized * hitDist);
+
+		Vector3 newPos = Vector3.Lerp(camTrans.position, targetPos, CameraCollideSpeed * Time.deltaTime);
+		camTrans.position = newPos;
+	}
+
+	private void PositionCamera(Vector3 camPos) // Position camera's localPosition to a given location 
+	{
+		Vector3 newPos = Vector3.Lerp(camTrans.localPosition, camPos, CameraMoveSpeed * Time.deltaTime);
+		camTrans.localPosition = newPos;
+	}
+
+	private void CheckMeshDistance() // Hide the meshes if within set distance 
+	{
+		Transform mainCamTrans = camTrans;
+		Vector3 mainCamPos = mainCamTrans.position;
+		Vector3 targetPos = Target.position;
+		float dist = Vector3.Distance(mainCamPos, (targetPos + Target.up));
+
+		// Check model meshes
+		if(meshes.Length > 0)
+			for(int i = 0; i < meshes.Length; i++)
+				meshes[i].enabled = (dist < HideMeshDistance) ? false : true;
+
+		// Check weapon meshes
+		//if(cameraSettings.wpnMeshes.Length > 0)
+		//{
+		//	for(int i = 0; i < cameraSettings.wpnMeshes.Length; i++)
+		//	{
+		//		cameraSettings.wpnMeshes[i].enabled = (dist < cameraSettings.hideMeshDistance) ? false : true;
+		//	}
+		//}
+	}
+
+	private void ChangeFOV(bool aim) // CHange camera FOV  
+	{
+		float targetFOV = (aim) ? AimingFOV : DefaultFOV;
+
+		float newFOV = Mathf.Lerp(mainCam.fieldOfView, targetFOV, ZoomSpeed * Time.deltaTime);
+		mainCam.fieldOfView = newFOV;
+	}
+
+	private void ParentAndResetMainCamera() // Setup main camera in any scene as TP camera 
+	{
+		Transform mainCamTrans = Camera.main.transform;
+		mainCamTrans.parent = camTrans;
+		mainCamTrans.localPosition = Vector3.zero;
+		mainCamTrans.localRotation = Quaternion.Euler(Vector3.zero);
+	}
+
+	private void TargetPlayer() // Finds player and set it as target 
+	{
+		if(Target || !AutoTargetPlayer)
+			return;
+
+		GameObject p = GameObject.FindGameObjectWithTag("Player");
+		if(p)
+			Target = p.transform;
+		else
+			Debug.LogError("There is no GameObject tagged as Player in the scene found!");
 	}
 }

@@ -10,10 +10,10 @@ public class PlayerHealth : EnemyHealth
 	[Header("Screen Flash on Damage")]
 	public Image RedTint;
 	[Range(0f, 1f)]
-	public float FlashOpacity = 1f, StayIntensity = .3f;
-	public float DamageFlashSpeed = 3f;
+	public float FlashOpacity = 1f, StayIntensity = 1f;
+	public float DamageFlashSpeed = 4f;
 
-	private Color currentRedTintTransparency;
+	private Color currentRedTintTransparency = new Color(1f, 1f, 1f, 0f);
 
 	[Header("Health Regen")]
 	public float RegenSpeed = 40f;
@@ -23,9 +23,15 @@ public class PlayerHealth : EnemyHealth
 
 	[Header("Death")]
 	public Grayscale GrayScreenEffect;
-	public float FadeScreenDelay = 3f;
-	public float FadeSpeed = .1f;
+	public float FadeScreenDelay = .5f;
+	public float FadeSpeed = .25f;
 	public float ReloadSceneDelay = 1f;
+
+	void Start()
+	{
+		if(GrayScreenEffect)
+			GrayScreenEffect.enabled = false;
+	}
 
 	protected override void Update()
 	{
@@ -35,8 +41,10 @@ public class PlayerHealth : EnemyHealth
 		CheckHealthRegenCondition();
 	}
 
-	public override void ReceiveDamage(int damage = 10)
+	public override void ReceiveDamage(float damage = 10)
 	{
+		if(dead) return;
+		
 		// Stops regen if received damage
 		if(regeneratingHealth)
 			StopCoroutine(RegenToFullHealth());
