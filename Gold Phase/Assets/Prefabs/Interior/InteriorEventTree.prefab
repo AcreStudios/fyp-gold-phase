@@ -31556,11 +31556,9 @@ MonoBehaviour:
   destination: {x: 0, y: 0, z: 0}
   destinationMarker: {fileID: 136180934500996976}
   target: {fileID: 0}
-  coverType: 0
   currentState: 0
   reactionTime: 0
   toEscort: 0
-  camp: 0
   damage: 1
   attackType: 1
   weaponOffset: {x: 0, y: 1.276, z: 0}
@@ -32317,11 +32315,9 @@ MonoBehaviour:
   destination: {x: 0, y: 0, z: 0}
   destinationMarker: {fileID: 136238805999382432}
   target: {fileID: 0}
-  coverType: 0
   currentState: 0
   reactionTime: 0
   toEscort: 0
-  camp: 0
   damage: 10
   attackType: 0
   weaponOffset: {x: 0, y: 1.276, z: 0}
@@ -34199,11 +34195,9 @@ MonoBehaviour:
   destination: {x: 0, y: 0, z: 0}
   destinationMarker: {fileID: 136853462043538040}
   target: {fileID: 0}
-  coverType: 0
   currentState: 0
   reactionTime: 0
   toEscort: 0
-  camp: 0
   damage: 10
   attackType: 0
   weaponOffset: {x: 0, y: 1.276, z: 0}
@@ -34378,11 +34372,9 @@ MonoBehaviour:
   destination: {x: 0, y: 0, z: 0}
   destinationMarker: {fileID: 136380277460483854}
   target: {fileID: 0}
-  coverType: 0
   currentState: 0
   reactionTime: 0
   toEscort: 0
-  camp: 0
   damage: 10
   attackType: 0
   weaponOffset: {x: 0, y: 1.276, z: 0}
