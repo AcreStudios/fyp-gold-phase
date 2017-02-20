@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class CivillianManager : MonoBehaviour {
+public class AIOverseer : MonoBehaviour {
 
     [System.Serializable]
     public struct TaskList {
@@ -26,18 +26,17 @@ public class CivillianManager : MonoBehaviour {
     [HideInInspector]
     public List<AI> aiList = new List<AI>();
 
-    public static CivillianManager instance;
-    public bool hostile;
+    public static AIOverseer instance;
     public int civillianCount;
     public GameObject civillian;
     public TaskList[] taskLists;
-    public AudioClip[] sfxList;
+    public AudioClip[] gunShotList;
+    public AudioClip[] flyByList;
 
     MeshFilter[] floors;
 
     void Awake() {
         instance = this;
-        //Debug.Log(gameObject);
         for (var i = 0; i < taskLists.Length; i++) {
             GameObject[] taskLocations = GameObject.FindGameObjectsWithTag(taskLists[i].taskTag);
             taskLists[i].tasks = new TaskLocation[taskLocations.Length];
@@ -75,9 +74,9 @@ public class CivillianManager : MonoBehaviour {
         return new TaskLocation();
     }
 
-    public void PlayRandomSound(Vector3 position) {
-        //if (sfxList.Length > 0)
-            //SoundManager.instance.PlaySoundOnce(position, sfxList[Random.Range(0, sfxList.Length)]);
+    public void PlayRandomSound(AudioClip[] audioGroup, Vector3 position) {
+        //if (audioGroup.Length > 0)
+            //SoundManager.instance.PlaySoundOnce(position, audioGroup[Random.Range(0, audioGroup.Length)]);
     }
 
     public void SpawnOnRandomFloor(GameObject civillian) {
@@ -87,13 +86,14 @@ public class CivillianManager : MonoBehaviour {
         Instantiate(civillian, new Vector3(spawnLocation.x * floorChoose.transform.localScale.x, 0, spawnLocation.z * floorChoose.transform.localScale.z) + floorChoose.transform.position, Quaternion.identity);
     }
 
-    public void AISetToHostile() {
-        hostile = true;
+    public void AIHostileRadius(Vector3 pos, float radius) {
+        Collider[] objectsInRadius = Physics.OverlapSphere(pos, radius);
 
-        for (var i = 0; i < civillianAIList.Count; i++) 
-            civillianAIList[i].Scared();
-
-        for (var i = 0; i < aiList.Count; i++)
-            aiList[i].HostileKnown();
+        foreach (Collider obj in objectsInRadius) {
+            if (obj.CompareTag("Civillian"))
+                civillianAIList[int.Parse(obj.name)].FindTarget();
+            if (obj.CompareTag("Enemy"))
+                aiList[int.Parse(obj.name)].FindTarget();
+        }
     }
 }

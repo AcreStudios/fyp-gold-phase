@@ -2549,19 +2549,22 @@ MonoBehaviour:
   maxHeightForCover: {fileID: 4690649550831238}
   durationInCover: 10
   ableToHide: 1
+  doesNotMoveFromCover: 0
   destination: {x: 0, y: 0, z: 0}
   destinationMarker: {fileID: 136000012030540420}
   target: {fileID: 0}
+  knowsTarget: 0
   coverType: 0
+  range: 50
   currentState: 0
   reactionTime: 0
   toEscort: 0
   camp: 0
+  retaliationTiming: 0
   damage: 1
   attackType: 0
   weaponOffset: {x: 0, y: 1.276, z: 0}
   attackInterval: 1
-  weaponRange: 20
   ableToDragPlayerOutOfCover: 0
   gunSprayValue: 1
   gunEffect: {fileID: 114000011517731252}

@@ -11,11 +11,13 @@ public class AIFunctions : MonoBehaviour {
     public Transform maxHeightForCover;
     public float durationInCover;
     public bool ableToHide;
+    public bool doesNotMoveFromCover;
 
     [Header("Target-Related Settings")]
     public Vector3 destination;
     public Collider destinationMarker;
     public Transform target;
+    public bool knowsTarget;
     protected Transform[] guns = new Transform[1];
     protected Transform linecastCheck;
     protected Vector3 startingPoint;
@@ -23,16 +25,26 @@ public class AIFunctions : MonoBehaviour {
     protected Animator animator;
     protected UnityEngine.AI.NavMeshAgent agent;
     public CoverType coverType;
-    //protected Vector3 
-    //Health hpScript;
+
+    [Header("Range")]
+    public float range;
+
+    bool ableToGetPoint;
+    
 
     void Awake() {
+        ableToGetPoint = true;
+
+        if (knowsTarget)
+            FindTarget();
         //hpScript = GetComponent<Health>();
     }
 
     public virtual void DamageRecieved() {
-        if (!CivillianManager.instance.hostile)
-            CivillianManager.instance.AISetToHostile();
+        FindTarget();
+
+        AIOverseer.instance.AIHostileRadius(transform.position, range);
+        AIOverseer.instance.AIHostileRadius(target.position, range);
 
         // if (hpScript.curHealth <= 0)
         // enabled = false;
@@ -43,22 +55,26 @@ public class AIFunctions : MonoBehaviour {
         obj.transform.position = location;
     }
 
-    public Vector3 GetDestinationPoint(float range) {
-        if (ableToHide) {
+    public virtual Vector3 GetDestinationPoint(float targetRange,bool hide) {
+        if (!ableToGetPoint || !target)
+            return destination;
+
+        if (hide) {
             Vector3 tempGradient = target.position - transform.position;
             tempGradient = Mathf.Abs(tempGradient.x) >= Mathf.Abs(tempGradient.z) ? tempGradient / Mathf.Abs(tempGradient.x) : tempGradient / Mathf.Abs(tempGradient.z);
             tempGradient.y = 0;
 
             for (var j = -1; j < 2; j++) {
                 if (j != 0) {
-                    //Debug.DrawLine(target.position, target.position + (tempGradient * -(range / 4)) + ((new Vector3(-(tempGradient.z), 0, tempGradient.x) * range / 4) * j), Color.black, 5);
-                    Collider[] colliders = Physics.OverlapSphere(target.position + (tempGradient * -(range / 4)) + ((new Vector3(-(tempGradient.z), 0, tempGradient.x) * range / 4) * j), range / 2);
+                    Debug.DrawLine(target.position, target.position + (tempGradient * -(targetRange / 4)) + ((new Vector3(-(tempGradient.z), 0, tempGradient.x) * targetRange / 4) * j), Color.red, 5);
+                    Collider[] colliders = Physics.OverlapSphere(target.position + (tempGradient * -(targetRange / 4)) + ((new Vector3(-(tempGradient.z), 0, tempGradient.x) * targetRange / 4) * j), targetRange / 2);
 
                     for (var i = 0; i < colliders.Length; i++) {
                         if (colliders[i].transform.CompareTag("Untagged"))
                             if (colliders[i].bounds.center.y + colliders[i].bounds.extents.y > minHeightForCover.position.y) {
                                 Vector3 temp = Vector3.zero;
                                 int vectorAffected;
+                                float minValue;
                                 float maxValue;
 
                                 temp = colliders[i].bounds.center - target.position;
@@ -74,7 +90,8 @@ public class AIFunctions : MonoBehaviour {
                                         temp.z *= -1;
 
                                     vectorAffected = 0;
-                                    maxValue = temp[vectorAffected] + 0.5f;
+                                    minValue = temp[vectorAffected];
+                                    maxValue = minValue + 0.5f;
                                 } else {
                                     coverType = CoverType.Low;
                                     if (Mathf.Abs(colliders[i].bounds.center.x - target.position.x) < Mathf.Abs(colliders[i].bounds.center.z - target.position.z))
@@ -83,19 +100,22 @@ public class AIFunctions : MonoBehaviour {
                                         vectorAffected = 2;
 
                                     maxValue = colliders[i].bounds.extents[vectorAffected];
+                                    minValue = maxValue * -1;
                                 }
 
-
-                                for (var k = -maxValue; k <= maxValue; k++) { //-ve +ve is the problem need some fixes
-                                    //Debug.Log(k);
+                                for (var k = minValue; k <= maxValue; k++) {
                                     Vector3 cachedVector = new Vector3();
                                     cachedVector = temp;
                                     cachedVector[vectorAffected] = k;
                                     cachedVector += colliders[i].bounds.center;
                                     cachedVector.y = transform.position.y;
-                                    Debug.DrawLine(target.position, cachedVector, Color.red, 1);
-                                    // if (CheckIfPosAvail(cachedVector))
-                                    //return cachedVector;
+
+                                    if (CheckIfPosAvail(cachedVector)) {
+                                        if (doesNotMoveFromCover)
+                                            ableToGetPoint = false;
+
+                                        return cachedVector;
+                                    }
                                 }
                             }
                     }
@@ -103,7 +123,7 @@ public class AIFunctions : MonoBehaviour {
             }
         }
         coverType = CoverType.None;
-        return ArcBasedPosition(target.position - transform.position, target.position, range);
+        return ArcBasedPosition(target.position - transform.position, target.position, targetRange);
     }
 
     public Vector3 ArcBasedPosition(Vector3 givenVector, Vector3 targetPos, float givenLength) {
@@ -144,5 +164,9 @@ public class AIFunctions : MonoBehaviour {
             destinationMarker.transform.position = temp;
 
         return hitFloor;
+    }
+
+    public virtual void FindTarget() {
+        target = GameObject.FindGameObjectWithTag("Player").transform;
     }
 }
