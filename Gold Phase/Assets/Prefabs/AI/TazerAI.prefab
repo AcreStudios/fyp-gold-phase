@@ -2375,11 +2375,14 @@ MonoBehaviour:
   durationInCover: 0
   ableToHide: 0
 <<<<<<< HEAD:Gold Phase/Assets/Prefabs/AI/TazerAI.prefab
+<<<<<<< HEAD:Gold Phase/Assets/Prefabs/AI/TazerAI.prefab
   destination: {x: 0, y: 0, z: 0}
   destinationMarker: {fileID: 136000012030540420}
   target: {fileID: 0}
   coverType: 0
 =======
+=======
+>>>>>>> 270b5e8d3a90e21d0f7ec1052e15a9d2eabefee0:Gold Phase/Assets/Prefabs/AI/TazerAI.prefab
   doesNotMoveFromCover: 0
   destination: {x: 0, y: 0, z: 0}
   destinationMarker: {fileID: 136000012030540420}
@@ -2387,12 +2390,19 @@ MonoBehaviour:
   knowsTarget: 0
   coverType: 0
   range: 5
+<<<<<<< HEAD:Gold Phase/Assets/Prefabs/AI/TazerAI.prefab
+>>>>>>> 270b5e8d3a90e21d0f7ec1052e15a9d2eabefee0:Gold Phase/Assets/Prefabs/AI/TazerAI.prefab
+=======
 >>>>>>> 270b5e8d3a90e21d0f7ec1052e15a9d2eabefee0:Gold Phase/Assets/Prefabs/AI/TazerAI.prefab
   currentState: 0
   reactionTime: 0
   toEscort: 0
   camp: 0
 <<<<<<< HEAD:Gold Phase/Assets/Prefabs/AI/TazerAI.prefab
+<<<<<<< HEAD:Gold Phase/Assets/Prefabs/AI/TazerAI.prefab
+=======
+  retaliationTiming: 0
+>>>>>>> 270b5e8d3a90e21d0f7ec1052e15a9d2eabefee0:Gold Phase/Assets/Prefabs/AI/TazerAI.prefab
 =======
   retaliationTiming: 0
 >>>>>>> 270b5e8d3a90e21d0f7ec1052e15a9d2eabefee0:Gold Phase/Assets/Prefabs/AI/TazerAI.prefab
@@ -2401,7 +2411,10 @@ MonoBehaviour:
   weaponOffset: {x: 0, y: 1.276, z: 0}
   attackInterval: 1
 <<<<<<< HEAD:Gold Phase/Assets/Prefabs/AI/TazerAI.prefab
+<<<<<<< HEAD:Gold Phase/Assets/Prefabs/AI/TazerAI.prefab
   weaponRange: 2
+=======
+>>>>>>> 270b5e8d3a90e21d0f7ec1052e15a9d2eabefee0:Gold Phase/Assets/Prefabs/AI/TazerAI.prefab
 =======
 >>>>>>> 270b5e8d3a90e21d0f7ec1052e15a9d2eabefee0:Gold Phase/Assets/Prefabs/AI/TazerAI.prefab
   ableToDragPlayerOutOfCover: 1
