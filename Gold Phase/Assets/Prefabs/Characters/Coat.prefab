@@ -20,7 +20,6 @@ GameObject:
   m_Component:
   - component: {fileID: 4234052701648156}
   - component: {fileID: 33494939254024506}
-  - component: {fileID: 95208016502901862}
   - component: {fileID: 183066262427592188}
   - component: {fileID: 137344545400580338}
   m_Layer: 0
@@ -37,7 +36,7 @@ Transform:
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 1913817276841500}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -11.051, y: 0, z: 5.079}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
@@ -50,23 +49,6 @@ MeshFilter:
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 1913817276841500}
   m_Mesh: {fileID: 4300000, guid: 45b14a96a6f74844f8d403785d64a153, type: 3}
---- !u!95 &95208016502901862
-Animator:
-  serializedVersion: 3
-  m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 1913817276841500}
-  m_Enabled: 1
-  m_Avatar: {fileID: 9000000, guid: 45b14a96a6f74844f8d403785d64a153, type: 3}
-  m_Controller: {fileID: 0}
-  m_CullingMode: 0
-  m_UpdateMode: 0
-  m_ApplyRootMotion: 0
-  m_LinearVelocityBlending: 0
-  m_WarningMessage: 
-  m_HasTransformHierarchy: 1
-  m_AllowConstantClipSamplingOptimization: 1
 --- !u!137 &137344545400580338
 SkinnedMeshRenderer:
   m_ObjectHideFlags: 1
@@ -108,7 +90,7 @@ SkinnedMeshRenderer:
   m_RootBone: {fileID: 0}
   m_AABB:
     m_Center: {x: -0.0008687973, y: 0.820743, z: 0.0048737526}
-    m_Extent: {x: 0.2510376, y: 0.3293541, z: 0.16058207}
+    m_Extent: {x: 0.25103736, y: 0.3293541, z: 0.16058207}
   m_DirtyAABB: 0
 --- !u!183 &183066262427592188
 Cloth:
@@ -2622,8 +2604,6 @@ Cloth:
   - maxDistance: 0
     collisionSphereDistance: 3.4028235e+38
   m_CapsuleColliders:
-  - {fileID: 0}
-  - {fileID: 0}
   - {fileID: 0}
   - {fileID: 0}
   - {fileID: 0}

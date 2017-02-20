@@ -5,7 +5,7 @@ using UnityEngine.UI;
 using UnityStandardAssets.ImageEffects;
 using UnityEngine.SceneManagement;
 
-public class PlayerHealth : EnemyHealth
+public class PlayerHealth : Health
 {
 	[Header("Screen Flash on Damage")]
 	public Image RedTint;

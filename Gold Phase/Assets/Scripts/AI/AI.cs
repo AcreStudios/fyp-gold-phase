@@ -9,8 +9,7 @@ public class AI : AIFunctions {
         Idle,
         Patrol,
         Escort,
-        Attacking,
-        InCover
+        Attacking
     }
 
     public enum WeaponType {
@@ -24,13 +23,13 @@ public class AI : AIFunctions {
     public bool toEscort;
     public bool camp;
     protected AIStates defaultState;
+    public float retaliationTiming;
 
     [Header("Weapons")]
     public float damage;
     public WeaponType attackType;
     public Vector3 weaponOffset = new Vector3(0, 1.276f, 0);
     public float attackInterval;
-    public float weaponRange;
     public bool ableToDragPlayerOutOfCover;
     float attackTimer;
 
@@ -49,12 +48,13 @@ public class AI : AIFunctions {
     float stateChangeTimer;
     float inCoverTimer;
     bool recentlyGotPoint;
+    float retaliationTimer;
 
     void Start() {
         gameObject.tag = "Enemy";
 
-        CivillianManager.instance.aiList.Add(this);
-        gameObject.name = (CivillianManager.instance.aiList.Count - 1).ToString();
+        AIOverseer.instance.aiList.Add(this);
+        gameObject.name = (AIOverseer.instance.aiList.Count - 1).ToString();
 
         guns[0] = transform.Find("Hanna_GunL");
         linecastCheck = transform.Find("LinecastChecker");
@@ -82,9 +82,6 @@ public class AI : AIFunctions {
             currentState = AIStates.Escort;
             agent.destination = patrolMod.patrolLocations[0];
         }
-
-        if (CivillianManager.instance.hostile)
-            HostileKnown();
     }
 
     void Update() {
@@ -98,7 +95,7 @@ public class AI : AIFunctions {
             case AIStates.Idle:
                 if (target) {
                     stateChangeTimer = Time.time + reactionTime;
-                    destination = GetDestinationPoint(weaponRange);
+                    destination = GetDestinationPoint(range, ableToHide);
                     currentState = AIStates.Attacking;
                 } else {
                     if ((startingPoint - transform.position).magnitude < 1) {
@@ -112,7 +109,7 @@ public class AI : AIFunctions {
             case AIStates.Patrol:
                 if (target != null) {
                     stateChangeTimer = Time.time + reactionTime;
-                    destination = GetDestinationPoint(weaponRange);
+                    destination = GetDestinationPoint(range, ableToHide);
                     currentState = AIStates.Attacking;
                 } else {
                     if ((patrolMod.patrolLocations[patrolMod.currentLocation] - transform.position).magnitude < 1) {
@@ -167,18 +164,20 @@ public class AI : AIFunctions {
                                     case CoverType.Low:
                                         animator.SetInteger("TreeState", 3);
                                         break;
+                                    case CoverType.High:
+                                        break;
                                 }
 
                             RaycastHit hit;
 
                             if (Physics.Linecast(new Vector3(destination.x, minHeightForCover.position.y, destination.z), target.position, out hit))
                                 if (hit.transform.root == target) {
-                                    destination = GetDestinationPoint(weaponRange);
+                                    destination = GetDestinationPoint(range, ableToHide);
                                     inCoverTimer = Time.time;
                                 }
 
-                            if ((target.position - transform.position).sqrMagnitude > weaponRange * weaponRange) {
-                                destination = GetDestinationPoint(weaponRange);
+                            if ((target.position - transform.position).sqrMagnitude > range * range) {
+                                destination = GetDestinationPoint(range, ableToHide);
                                 inCoverTimer = Time.time;
                             }
                         }
@@ -190,9 +189,6 @@ public class AI : AIFunctions {
                     agent.destination = destination;
                 }
                 break;
-
-            case AIStates.InCover:
-                break;
         }
 
         destinationMarker.transform.position = destination;
@@ -200,13 +196,30 @@ public class AI : AIFunctions {
 
     public override void DamageRecieved() {
         toEscort = false;
-        target = GameObject.FindGameObjectWithTag("Player").transform;
         currentState = AIStates.Attacking;
 
         if (coverType == CoverType.Low)
             inCoverTimer += durationInCover;
 
+        retaliationTimer = Time.time + retaliationTiming;
         base.DamageRecieved();
+    }
+
+    public override Vector3 GetDestinationPoint(float targetRange, bool hide) {
+        bool tempVar = ableToHide;
+
+        if (retaliationTimer > Time.time) {
+            //Debug.Log("Working");
+            tempVar = false;
+            targetRange = (target.position - transform.position).magnitude;
+
+            if (targetRange > range)
+                targetRange = range;
+        }
+
+        //Debug.Log(retaliationTimer + " " + Time.time);
+
+        return base.GetDestinationPoint(range, tempVar);
     }
 
     public void Attack() {
@@ -223,26 +236,30 @@ public class AI : AIFunctions {
                         gunEffect.transform.position = gun.position;
                         gunEffect.gameObject.SetActive(true);
                         gunEffect.ObjectActive();
-                        StartCoroutine(ChangeObjectLocation(gunEffect.gameObject, gun.position + gun.TransformDirection(0, 0, weaponRange) + offset));
+                        StartCoroutine(ChangeObjectLocation(gunEffect.gameObject, gun.position + gun.TransformDirection(0, 0, range) + offset));
 
                         RaycastHit hit;
-                        Debug.DrawRay(gun.position, gun.TransformDirection(0, 0, weaponRange) + offset, Color.red);
-                        if (Physics.Raycast(gun.position, gun.TransformDirection(0, 0, weaponRange) + offset, out hit))
-                            if (hit.transform.CompareTag("NearPlayer"))
-                                CivillianManager.instance.PlayRandomSound(hit.point);
+                        Debug.DrawRay(gun.position, gun.TransformDirection(0, 0, range) + offset, Color.red);
+                        AIOverseer.instance.PlayRandomSound(AIOverseer.instance.gunShotList, transform.position);
 
-                        if (Physics.Raycast(gun.position, gun.TransformDirection(0, 0, weaponRange) + offset, out hit))
+                        if (Physics.Raycast(gun.position, gun.TransformDirection(0, 0, range) + offset, out hit))
+                            if (hit.transform.CompareTag("NearPlayer"))
+                                AIOverseer.instance.PlayRandomSound(AIOverseer.instance.flyByList, hit.point);
+
+                        if (Physics.Raycast(gun.position, gun.TransformDirection(0, 0, range) + offset, out hit))
                             targetHit = hit.transform.root;
                     }
                     break;
                 case WeaponType.Area:
-                    Collider[] units = Physics.OverlapSphere(transform.position + transform.TransformDirection(0, 0, weaponRange), areaTestRadius);
+                    Collider[] units = Physics.OverlapSphere(transform.position + transform.TransformDirection(0, 0, range), areaTestRadius);
 
                     foreach (Collider unit in units)
                         if (unit.transform.CompareTag("Player"))
                             targetHit = unit.transform;
                     break;
             }
+
+            AIOverseer.instance.AIHostileRadius(transform.position, range);
 
             if (targetHit != null)
                 if (targetHit != transform) {
@@ -253,21 +270,16 @@ public class AI : AIFunctions {
 
                     if (targetHit.tag == "Player")
                         if (ableToDragPlayerOutOfCover) {
-                            //CoverSystem inst = targetHit.GetComponent<CoverSystem>();
-                            //if (inst)
+//CoverSystem inst = targetHit.GetComponent<CoverSystem>();
+                           // if (inst)
                                 //inst.EnableController();
                         }
 
                     if ((ai = targetHit.GetComponent<AIFunctions>()) != null)
-                        ai.destination = GetDestinationPoint((ai as AI).weaponRange);
+                        ai.destination = GetDestinationPoint((ai as AI).range, (ai as AI).ableToHide);
 
                     attackTimer = Time.time + attackInterval;
                 }
         }
-    }
-
-    public void HostileKnown() {
-        if (currentState != AIStates.Escort)
-            target = GameObject.FindGameObjectWithTag("Player").transform;
     }
 }

@@ -16,12 +16,11 @@ public class CivillianAI : AIFunctions {
     //[Range(0, 1)]
     //public float socialbility = 0.5f;
     public float attentionSpan = 5;
-    public float sightRange = 10;
     public float fearRandomiserMin = 2;
     public float fearRandomiserMax = 5;
     public bool randomlyGeneratedValues;
 
-    CivillianManager.TaskLocation instance;
+    AIOverseer.TaskLocation instance;
     CivillianAI civillianTarget;
     float timer;
     int currentTaskUser;
@@ -32,20 +31,17 @@ public class CivillianAI : AIFunctions {
         animator = GetComponent<Animator>();
 
         colorChanging = GetComponent<Renderer>();
-        CivillianManager.instance.civillianAIList.Add(this);
+        AIOverseer.instance.civillianAIList.Add(this);
         gameObject.tag = "Civillian";
-        gameObject.name = (CivillianManager.instance.civillianAIList.Count - 1).ToString();
+        gameObject.name = (AIOverseer.instance.civillianAIList.Count - 1).ToString();
         agent = GetComponent<NavMeshAgent>();
-        instance = new CivillianManager.TaskLocation();
+        instance = new AIOverseer.TaskLocation();
 
         if (randomlyGeneratedValues) {
             talkativity = Random.value;
             //socialbility = Random.value;
             attentionSpan = Random.Range(5, 60);
         }
-
-        if (CivillianManager.instance.hostile)
-            Scared();
     }
 
     void Update() {
@@ -108,8 +104,8 @@ public class CivillianAI : AIFunctions {
 
             case Actions.RunFromPlayer:
 
-                if ((target.position - destination).sqrMagnitude < (sightRange * 10) * (sightRange * 10)) {
-                    destination = ArcBasedPosition(target.position - transform.position, target.position, sightRange * 10);
+                if ((target.position - destination).sqrMagnitude < (range * 10) * (range * 10)) {
+                    destination = ArcBasedPosition(target.position - transform.position, target.position, range * 10);
                     agent.destination = destination;
                 }
 
@@ -119,22 +115,23 @@ public class CivillianAI : AIFunctions {
                     animator.SetInteger("TreeState", 0);
                 break;
         }
+
         destinationMarker.transform.position = destination;
     }
 
-    public void FindNewTask(CivillianManager.TaskLocation inst, int taskUser) {
-        instance = CivillianManager.instance.TaskQuery(gameObject, out timer, out currentTaskUser);
+    public void FindNewTask(AIOverseer.TaskLocation inst, int taskUser) {
+        instance = AIOverseer.instance.TaskQuery(gameObject, out timer, out currentTaskUser);
 
         if (inst.taskLocation)
             inst.civillianOnTask[taskUser] = null;
     }
 
     public void FindSomeoneToTalkTo() {
-        Collider[] inRadius = Physics.OverlapSphere(transform.position, sightRange);
+        Collider[] inRadius = Physics.OverlapSphere(transform.position, range);
 
         foreach (Collider stuff in inRadius)
             if (stuff.transform.CompareTag("Civillian") && stuff.gameObject != gameObject)
-                if (CivillianManager.instance.civillianAIList[int.Parse(stuff.name)].Talk(this))
+                if (AIOverseer.instance.civillianAIList[int.Parse(stuff.name)].Talk(this))
                     return;
     }
 
@@ -159,13 +156,12 @@ public class CivillianAI : AIFunctions {
         return false;
     }
 
-    public void Scared() {
-        actions = Actions.RunFromPlayer;
-        target = GameObject.FindGameObjectWithTag("Player").transform;
-        agent.speed *= 2;
-    }
-
     public override void DamageRecieved() {
         base.DamageRecieved();
+    }
+
+    public override void FindTarget() {
+        actions = Actions.RunFromPlayer;
+        base.FindTarget();
     }
 }
