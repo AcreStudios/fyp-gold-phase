@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class EnemyHealth : MonoBehaviour
+public class Health : MonoBehaviour
 {
 	// Components
 	private RagdollDeath ragdoll;

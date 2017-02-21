@@ -23,7 +23,9 @@ public class WeaponSystem : MonoBehaviour
 	public BulletImpact[] BulletImpacts = new BulletImpact[1];
 
 	[Header("Weapon Settings")]
-	public float Damage = 10f;
+	public float Damage = 30f;
+	public float HeadshotMultiplier = 3f;
+	public float LimbshotMultiplier = .5f;
 	public float AttackRate = .3f;
 	public float AttackRange = 100f;
 	public bool AutoReload = false;
@@ -166,11 +168,19 @@ public class WeaponSystem : MonoBehaviour
 
 		if(Physics.Raycast(start, dir, out hit, AttackRange, BulletLayer))
 		{
-			EnemyHealth hp = hit.transform.GetComponent<EnemyHealth>();
+			Health hp = hit.transform.root.GetComponent<Health>();
 			if(hp && hp.isActiveAndEnabled)
 			{
-				hp.ReceiveDamage(Damage);
 				combatUI.TriggerHitEnemy();
+
+				// Hit different body part
+				print(hit.collider);
+				if(hit.collider is SphereCollider)
+					hp.ReceiveDamage(Damage * HeadshotMultiplier);
+				else if(hit.collider is CapsuleCollider)
+					hp.ReceiveDamage(Damage * LimbshotMultiplier);
+				else
+					hp.ReceiveDamage(Damage);
 			}
 			else
 				Debug.Log("Did not hit an enemy. Hit " + hit.transform.name + " instead!");
